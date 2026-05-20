@@ -101,6 +101,12 @@ When a profile fails:
 
 Billing failures (insufficient credits) typically get longer cooldowns.
 
+## Field notes that save time
+
+- If crons fail immediately with `model_not_found`, look for stale aliases or retired model ids pinned in the job itself, for example `claude-cli/claude-sonnet-4-6` or `claude-3-haiku-20240307`.
+- If a provider suddenly rejects third-party usage for credits/billing, do not keep re-running the same pinned job. Move the cron to one known-good live model first, then clean up stored per-job overrides later.
+- After upgrades, re-run `openclaw doctor --fix` once. Recent OpenClaw versions can preserve Codex OAuth routes and repair bad cron `payload.model` overrides.
+
 ## Monitoring Failover
 
 Your usage monitor should track:

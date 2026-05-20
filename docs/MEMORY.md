@@ -27,11 +27,13 @@
 - For isolated cron jobs, set explicit `delivery.channel` + `delivery.to`; use `delivery.bestEffort=true` when completion matters more than message transport certainty.
 - Avoid dual-send designs (announce + manual message to same target) to reduce duplicate/suppressed delivery behavior.
 - **Cron burst backfill (recurring pattern):** Gateway downtime causes all crons to backfire in a compressed burst on restart. This is expected behavior — not a bug. No action needed unless the gap exceeds 24h; just log it.
+- **Cron model drift / credit failure:** if crons suddenly fail before doing any work, check model resolution first. Common pattern: stale aliases (for example `claude-cli/claude-sonnet-4-6`) or provider credit gating on a hard-pinned model. Fix by normalizing jobs to one known-good live model and clearing bad per-job or stored-session overrides.
 - **DM allowlist fix:** `openclaw doctor` auto-restores missing `allowFrom` entries. Run if Telegram DMs go silent post-upgrade.
 
 ### Backup & Secrets
 - **`openclaw backup`:** Use `openclaw backup create` to make a backup. Use `openclaw backup verify <path>` to validate — `backup list` is not a valid command.
 - **Secrets audit:** `openclaw secrets audit/configure/apply/reload` available. Re-audit after major upgrades. Secrets in plaintext in openclaw.json or auth-profiles.json = findings. Auth profile migration needs user sign-off.
+- **Session cleanup split:** `openclaw sessions cleanup` prunes session stores, transcripts, and trajectory sidecars only. Cron run logs live separately under `~/.openclaw/cron/runs/` and are governed by `cron.runLog.maxBytes` + `cron.runLog.keepLines`.
 
 ### Automation
 - Idle/autonomy decisions must use only real inbound user messages. Heartbeats and cron prompts do not count as "user active."
@@ -39,6 +41,7 @@
 - Heartbeat duplicate poll events can cause apparent spam; dedupe aggressively and keep healthy-heartbeat updates silent.
 - **Autonomous ship pattern:** small scoped change → commit/push → live verification (build/curl/screenshot) before moving on.
 - **Codex terminals die ~30 min.** Tasks must be completable in that window.
+- **Codex CLI drift:** `/opt/homebrew/bin/codex` can exist as a broken symlink. If Codex suddenly "disappears", verify the symlink target, not just the link path.
 - External quota failures (e.g., X API `HTTP 402 CreditsDepleted`) = provider-capacity blocker, not local regression.
 
 ### Security
